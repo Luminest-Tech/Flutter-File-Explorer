@@ -1,4 +1,4 @@
-# flutter_file_explorer
+# Flutter File Explorer
 
 A file picker for Flutter desktop that renders inside your app instead of
 opening the operating system dialog. It looks like Windows Explorer, follows
