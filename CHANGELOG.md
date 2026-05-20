@@ -1,3 +1,11 @@
+## 0.2.1
+
+Documentation only. No code changes from 0.2.0.
+
+- Rewrote the README as a general-purpose desktop file picker, with full usage
+  and a complete parameter reference.
+- Added dark and light screenshots, shown in the README and the pub.dev gallery.
+
 ## 0.2.0
 
 Feature release.
