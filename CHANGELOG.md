@@ -1,3 +1,7 @@
+## 0.2.2
+
+- Link the GitHub repository and issue tracker in the pubspec.
+
 ## 0.2.1
 
 Documentation only. No code changes from 0.2.0.

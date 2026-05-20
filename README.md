@@ -6,7 +6,7 @@ your app's theme, and behaves the same on Windows, macOS, and Linux.
 
 | Dark | Light |
 |------|-------|
-| ![Open dialog, dark theme](https://pub.dev/packages/flutter_file_explorer/versions/0.2.1/gen-res/gen/pics/screenshot-dark.webp) | ![Open dialog, light theme](https://pub.dev/packages/flutter_file_explorer/versions/0.2.1/gen-res/gen/pics/screenshot-light.webp) |
+| ![Open dialog, dark theme](pics/screenshot-dark.png) | ![Open dialog, light theme](pics/screenshot-light.png) |
 
 ## Why
 
