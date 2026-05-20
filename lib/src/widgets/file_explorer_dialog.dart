@@ -613,13 +613,13 @@ class _FileExplorerDialogState extends State<FileExplorerDialog> {
                   ],
                 ),
               ),
-              _buildFooter(cs),
               StatusBar(
                 itemCount: visible.length,
                 selectedCount: _selected.length,
                 selectedBytes: _selectedBytes,
                 strings: _s,
               ),
+              _buildFooter(cs),
             ],
           ),
         ),
@@ -679,26 +679,36 @@ class _FileExplorerDialogState extends State<FileExplorerDialog> {
               ),
               const SizedBox(width: 8),
               _buildSearchField(cs),
-              const SizedBox(width: 8),
-              _buildHiddenToggle(cs),
-              _buildViewMenu(cs),
-              _buildPreviewToggle(cs),
-              const SizedBox(width: 8),
-              IconButton.outlined(
-                icon: const Icon(Icons.refresh, size: 18),
-                tooltip: _s.refreshTooltip,
-                onPressed: _loading || _currentDir == null
-                    ? null
-                    : () => _loadDir(_currentDir!),
-              ),
-              const SizedBox(width: 8),
-              IconButton.outlined(
-                icon: const Icon(Icons.create_new_folder_outlined, size: 18),
-                tooltip: _s.newFolderTooltip,
-                onPressed:
-                    _loading || _currentDir == null ? null : _createNewFolder,
-              ),
             ],
+          ),
+          const SizedBox(height: 8),
+          // Thin action row: view controls on the left, folder actions right.
+          SizedBox(
+            height: 36,
+            child: Row(
+              children: [
+                _buildHiddenToggle(cs),
+                _buildViewMenu(cs),
+                _buildPreviewToggle(cs),
+                const Spacer(),
+                IconButton.outlined(
+                  icon: const Icon(Icons.refresh, size: 18),
+                  tooltip: _s.refreshTooltip,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _loading || _currentDir == null
+                      ? null
+                      : () => _loadDir(_currentDir!),
+                ),
+                const SizedBox(width: 8),
+                IconButton.outlined(
+                  icon: const Icon(Icons.create_new_folder_outlined, size: 18),
+                  tooltip: _s.newFolderTooltip,
+                  visualDensity: VisualDensity.compact,
+                  onPressed:
+                      _loading || _currentDir == null ? null : _createNewFolder,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -740,6 +750,7 @@ class _FileExplorerDialogState extends State<FileExplorerDialog> {
           size: 18),
       tooltip: _showHidden ? _s.hideHiddenTooltip : _s.showHiddenTooltip,
       isSelected: _showHidden,
+      visualDensity: VisualDensity.compact,
       color: _showHidden ? cs.primary : null,
       onPressed: () => setState(() => _showHidden = !_showHidden),
     );
@@ -749,6 +760,8 @@ class _FileExplorerDialogState extends State<FileExplorerDialog> {
     return PopupMenuButton<FileExplorerViewMode>(
       tooltip: _s.viewModeTooltip,
       icon: const Icon(Icons.grid_view_outlined, size: 18),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
       initialValue: _viewMode,
       onSelected: (m) => setState(() => _viewMode = m),
       itemBuilder: (context) => [
@@ -789,6 +802,7 @@ class _FileExplorerDialogState extends State<FileExplorerDialog> {
       icon: const Icon(Icons.vertical_split_outlined, size: 18),
       tooltip: _showPreview ? _s.hidePreviewTooltip : _s.showPreviewTooltip,
       isSelected: _showPreview,
+      visualDensity: VisualDensity.compact,
       color: _showPreview ? cs.primary : null,
       onPressed: () => setState(() => _showPreview = !_showPreview),
     );

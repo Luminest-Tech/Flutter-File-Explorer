@@ -197,7 +197,7 @@ class _FileListState extends State<FileList> {
       case FileExplorerViewMode.details:
         return _buildDetailsList(cs);
       case FileExplorerViewMode.largeIcons:
-        return _buildGrid(cs, tileExtent: 116, iconSize: 48, tile: false);
+        return _buildGrid(cs, tileExtent: 132, iconSize: 64, tile: false);
       case FileExplorerViewMode.tiles:
         return _buildGrid(cs, tileExtent: 240, iconSize: 32, tile: true);
     }
@@ -226,10 +226,10 @@ class _FileListState extends State<FileList> {
       ),
       child: Row(
         children: [
-          _headerCell(cs, s.nameColumn, FileListSort.name, flex: 5),
-          _headerCell(cs, s.dateModifiedColumn, FileListSort.modified, flex: 3),
-          _headerCell(cs, s.typeColumn, FileListSort.type, flex: 2),
-          _headerCell(cs, s.sizeColumn, FileListSort.size, flex: 1),
+          _headerCell(cs, s.nameColumn, FileListSort.name, flex: 6),
+          _headerCell(cs, s.dateModifiedColumn, FileListSort.modified, flex: 4),
+          _headerCell(cs, s.typeColumn, FileListSort.type, flex: 3),
+          _headerCell(cs, s.sizeColumn, FileListSort.size, flex: 2),
         ],
       ),
     );
@@ -250,12 +250,16 @@ class _FileListState extends State<FileList> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurface,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
                 ),
               ),
               if (active) ...[
@@ -290,7 +294,7 @@ class _FileListState extends State<FileList> {
         child: Row(
           children: [
             Expanded(
-              flex: 5,
+              flex: 6,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
@@ -314,7 +318,7 @@ class _FileListState extends State<FileList> {
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -326,7 +330,7 @@ class _FileListState extends State<FileList> {
               ),
             ),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -338,7 +342,7 @@ class _FileListState extends State<FileList> {
               ),
             ),
             Expanded(
-              flex: 1,
+              flex: 2,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -369,7 +373,7 @@ class _FileListState extends State<FileList> {
       padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: tileExtent,
-        mainAxisExtent: tile ? 64 : 116,
+        mainAxisExtent: tile ? 64 : 132,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
@@ -387,22 +391,29 @@ class _FileListState extends State<FileList> {
       isSelected,
       e,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          // Anchor to the top so the icon sits at the same vertical position
+          // in every cell, whether the name wraps to one line or two.
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             SizedBox(
               width: iconSize,
               height: iconSize,
-              child: _icon(context, e, iconSize, cs),
+              child: _icon(context, e, iconSize, cs, thumbnail: true),
             ),
-            const SizedBox(height: 6),
-            Text(
-              e.name,
-              style: TextStyle(fontSize: 12, color: cs.onSurface),
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 8),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  e.name,
+                  style: TextStyle(fontSize: 12, color: cs.onSurface),
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ],
         ),
@@ -542,7 +553,13 @@ class _FileListState extends State<FileList> {
     );
   }
 
-  Widget _icon(BuildContext context, FileListEntry e, double size, ColorScheme cs) {
+  Widget _icon(
+    BuildContext context,
+    FileListEntry e,
+    double size,
+    ColorScheme cs, {
+    bool thumbnail = false,
+  }) {
     final builder = widget.iconBuilder;
     if (builder != null) {
       final custom = builder(
@@ -557,10 +574,37 @@ class _FileListState extends State<FileList> {
         return Center(child: custom);
       }
     }
+    if (!e.isDirectory && thumbnail && _isImage(e.name)) {
+      return _imageThumb(e.entity.path, size, e.name);
+    }
     if (e.isDirectory) {
       return Icon(Icons.folder, size: size, color: cs.primary);
     }
     return FileIcon(e.name, size: size);
+  }
+
+  static const _imageExts = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'};
+
+  bool _isImage(String name) {
+    final ext = p.extension(name).toLowerCase().replaceFirst('.', '');
+    return _imageExts.contains(ext);
+  }
+
+  /// A bitmap thumbnail for image entries, decoded down to roughly the display
+  /// size for performance, falling back to the file-type icon on error.
+  Widget _imageThumb(String path, double size, String name) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: Image.file(
+        File(path),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        cacheWidth: (size * 2).round(),
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stack) => FileIcon(name, size: size),
+      ),
+    );
   }
 }
 
