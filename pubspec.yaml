@@ -1,7 +1,13 @@
 name: flutter_file_explorer
 description: "Embedded Windows-Explorer-style file picker for Flutter desktop apps. Save, open, multi-select and directory pick — all rendered inside your app."
-version: 0.1.0
-repository: https://github.com/kgbalay/flutter_file_explorer
+version: 0.2.0
+
+topics:
+  - file-picker
+  - file-explorer
+  - file-dialog
+  - desktop
+  - picker
 
 environment:
   sdk: ^3.8.1
@@ -10,9 +16,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  intl: ^0.20.2
+  file_icon: ^1.0.0
   path: ^1.9.1
   path_provider: ^2.1.5
+  desktop_drop: ^0.7.1
+  shared_preferences: ^2.5.5
+  ffi: ^2.2.0
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'models.dart';
+import 'strings.dart';
 import 'widgets/file_explorer_dialog.dart';
 
 /// Static entry points for the in-app file picker.
@@ -8,6 +9,15 @@ class FileExplorer {
   FileExplorer._();
 
   /// Save mode. Returns the absolute path the user chose, or `null` if cancelled.
+  ///
+  /// Set [dismissable] to `true` to let the user cancel by clicking the
+  /// scrim outside the dialog. Defaults to `false`.
+  ///
+  /// - [iconBuilder] overrides the icon shown per entry (return `null` to fall
+  ///   back to the default).
+  /// - [strings] localizes every label (English by default).
+  /// - [showHiddenFiles] sets the initial state of the hidden-files toggle.
+  /// - [initialViewMode] picks the starting layout (details / large icons / tiles).
   static Future<String?> save(
     BuildContext context, {
     String title = 'Save As',
@@ -15,6 +25,11 @@ class FileExplorer {
     String? initialDirectory,
     List<FileTypeFilter>? fileTypes,
     List<QuickLocation>? quickLocations,
+    bool dismissable = false,
+    FileIconBuilder? iconBuilder,
+    FileExplorerStrings strings = const FileExplorerStrings(),
+    bool showHiddenFiles = false,
+    FileExplorerViewMode initialViewMode = FileExplorerViewMode.details,
   }) async {
     final result = await _show(
       context,
@@ -24,6 +39,11 @@ class FileExplorer {
       initialDirectory: initialDirectory,
       fileTypes: fileTypes,
       quickLocations: quickLocations,
+      dismissable: dismissable,
+      iconBuilder: iconBuilder,
+      strings: strings,
+      showHiddenFiles: showHiddenFiles,
+      initialViewMode: initialViewMode,
     );
     return (result == null || result.isEmpty) ? null : result.first;
   }
@@ -35,6 +55,11 @@ class FileExplorer {
     String? initialDirectory,
     List<FileTypeFilter>? fileTypes,
     List<QuickLocation>? quickLocations,
+    bool dismissable = false,
+    FileIconBuilder? iconBuilder,
+    FileExplorerStrings strings = const FileExplorerStrings(),
+    bool showHiddenFiles = false,
+    FileExplorerViewMode initialViewMode = FileExplorerViewMode.details,
   }) async {
     final result = await _show(
       context,
@@ -43,6 +68,11 @@ class FileExplorer {
       initialDirectory: initialDirectory,
       fileTypes: fileTypes,
       quickLocations: quickLocations,
+      dismissable: dismissable,
+      iconBuilder: iconBuilder,
+      strings: strings,
+      showHiddenFiles: showHiddenFiles,
+      initialViewMode: initialViewMode,
     );
     return (result == null || result.isEmpty) ? null : result.first;
   }
@@ -54,6 +84,11 @@ class FileExplorer {
     String? initialDirectory,
     List<FileTypeFilter>? fileTypes,
     List<QuickLocation>? quickLocations,
+    bool dismissable = false,
+    FileIconBuilder? iconBuilder,
+    FileExplorerStrings strings = const FileExplorerStrings(),
+    bool showHiddenFiles = false,
+    FileExplorerViewMode initialViewMode = FileExplorerViewMode.details,
   }) async {
     final result = await _show(
       context,
@@ -62,6 +97,11 @@ class FileExplorer {
       initialDirectory: initialDirectory,
       fileTypes: fileTypes,
       quickLocations: quickLocations,
+      dismissable: dismissable,
+      iconBuilder: iconBuilder,
+      strings: strings,
+      showHiddenFiles: showHiddenFiles,
+      initialViewMode: initialViewMode,
     );
     return (result == null || result.isEmpty) ? null : result;
   }
@@ -72,6 +112,11 @@ class FileExplorer {
     String title = 'Select Folder',
     String? initialDirectory,
     List<QuickLocation>? quickLocations,
+    bool dismissable = false,
+    FileIconBuilder? iconBuilder,
+    FileExplorerStrings strings = const FileExplorerStrings(),
+    bool showHiddenFiles = false,
+    FileExplorerViewMode initialViewMode = FileExplorerViewMode.details,
   }) async {
     final result = await _show(
       context,
@@ -79,6 +124,11 @@ class FileExplorer {
       title: title,
       initialDirectory: initialDirectory,
       quickLocations: quickLocations,
+      dismissable: dismissable,
+      iconBuilder: iconBuilder,
+      strings: strings,
+      showHiddenFiles: showHiddenFiles,
+      initialViewMode: initialViewMode,
     );
     return (result == null || result.isEmpty) ? null : result.first;
   }
@@ -91,9 +141,15 @@ class FileExplorer {
     String? initialDirectory,
     List<FileTypeFilter>? fileTypes,
     List<QuickLocation>? quickLocations,
+    required bool dismissable,
+    FileIconBuilder? iconBuilder,
+    required FileExplorerStrings strings,
+    required bool showHiddenFiles,
+    required FileExplorerViewMode initialViewMode,
   }) {
     return showDialog<List<String>>(
       context: context,
+      barrierDismissible: dismissable,
       builder: (_) => FileExplorerDialog(
         mode: mode,
         title: title,
@@ -101,6 +157,10 @@ class FileExplorer {
         initialDirectory: initialDirectory,
         fileTypes: fileTypes,
         quickLocations: quickLocations,
+        iconBuilder: iconBuilder,
+        strings: strings,
+        showHiddenFiles: showHiddenFiles,
+        initialViewMode: initialViewMode,
       ),
     );
   }

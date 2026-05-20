@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../models.dart';
+import '../path_utils.dart';
+import '../strings.dart';
 
-/// Left navigation pane: Quick Access + This PC (lazy-loaded drives).
+/// Left navigation pane. Quick Access, Recent (when available), and This PC are
+/// each collapsible. Drives are lazy-loaded when This PC is expanded.
 class Sidebar extends StatefulWidget {
   final List<QuickLocation> quickLocations;
+  final List<QuickLocation> recentLocations;
   final Future<List<QuickLocation>> Function() drivesLoader;
   final String? currentPath;
   final ValueChanged<String> onLocationSelected;
+  final FileExplorerStrings strings;
 
   const Sidebar({
     super.key,
     required this.quickLocations,
+    required this.recentLocations,
     required this.drivesLoader,
     required this.currentPath,
     required this.onLocationSelected,
+    required this.strings,
   });
 
   @override
@@ -22,7 +29,9 @@ class Sidebar extends StatefulWidget {
 }
 
 class _SidebarState extends State<Sidebar> {
-  bool _expanded = true;
+  bool _quickExpanded = true;
+  bool _recentExpanded = true;
+  bool _thisPcExpanded = true;
   List<QuickLocation>? _drives;
   bool _loadingDrives = false;
 
@@ -46,8 +55,9 @@ class _SidebarState extends State<Sidebar> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final s = widget.strings;
     return Container(
-      width: 200,
+      width: 220,
       decoration: BoxDecoration(
         color: cs.surfaceContainerLowest,
         border: Border(
@@ -57,37 +67,38 @@ class _SidebarState extends State<Sidebar> {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          _sectionLabel(cs, 'Quick Access'),
-          for (final loc in widget.quickLocations) _buildEntry(cs, loc, indent: false),
-          const Divider(height: 16, indent: 12, endIndent: 12),
-          InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    _expanded ? Icons.expand_more : Icons.chevron_right,
-                    size: 18,
-                    color: cs.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.computer_outlined, size: 18, color: cs.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'This PC',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: cs.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _sectionHeader(
+            cs,
+            label: s.quickAccess,
+            icon: Icons.star_outline,
+            expanded: _quickExpanded,
+            onTap: () => setState(() => _quickExpanded = !_quickExpanded),
           ),
-          if (_expanded) ...[
+          if (_quickExpanded)
+            for (final loc in widget.quickLocations)
+              _buildEntry(cs, loc, indent: true),
+          if (widget.recentLocations.isNotEmpty) ...[
+            const Divider(height: 16, indent: 12, endIndent: 12),
+            _sectionHeader(
+              cs,
+              label: s.recent,
+              icon: Icons.history,
+              expanded: _recentExpanded,
+              onTap: () => setState(() => _recentExpanded = !_recentExpanded),
+            ),
+            if (_recentExpanded)
+              for (final loc in widget.recentLocations)
+                _buildEntry(cs, loc, indent: true),
+          ],
+          const Divider(height: 16, indent: 12, endIndent: 12),
+          _sectionHeader(
+            cs,
+            label: s.thisPc,
+            icon: Icons.computer_outlined,
+            expanded: _thisPcExpanded,
+            onTap: () => setState(() => _thisPcExpanded = !_thisPcExpanded),
+          ),
+          if (_thisPcExpanded) ...[
             if (_loadingDrives)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -108,16 +119,40 @@ class _SidebarState extends State<Sidebar> {
     );
   }
 
-  Widget _sectionLabel(ColorScheme cs, String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: cs.onSurfaceVariant,
-          letterSpacing: 0.4,
+  Widget _sectionHeader(
+    ColorScheme cs, {
+    required String label,
+    required IconData icon,
+    required bool expanded,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              expanded ? Icons.expand_more : Icons.chevron_right,
+              size: 18,
+              color: cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Icon(icon, size: 18, color: cs.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -129,7 +164,7 @@ class _SidebarState extends State<Sidebar> {
     required bool indent,
   }) {
     final selected = widget.currentPath != null &&
-        _samePath(widget.currentPath!, loc.path);
+        samePath(widget.currentPath!, loc.path);
     return Material(
       color: selected
           ? cs.primaryContainer.withValues(alpha: 0.4)
@@ -137,7 +172,7 @@ class _SidebarState extends State<Sidebar> {
       child: InkWell(
         onTap: () => widget.onLocationSelected(loc.path),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(indent ? 30 : 12, 8, 12, 8),
+          padding: EdgeInsets.fromLTRB(indent ? 30 : 12, 6, 12, 6),
           child: Row(
             children: [
               Icon(
@@ -159,11 +194,5 @@ class _SidebarState extends State<Sidebar> {
         ),
       ),
     );
-  }
-
-  bool _samePath(String a, String b) {
-    String normalize(String s) =>
-        s.toLowerCase().replaceAll('/', r'\').replaceAll(RegExp(r'\\+$'), '');
-    return normalize(a) == normalize(b);
   }
 }

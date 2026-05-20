@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
-class NewFolderDialog extends StatefulWidget {
-  const NewFolderDialog({super.key});
+import '../strings.dart';
 
-  static Future<String?> show(BuildContext context) {
+class NewFolderDialog extends StatefulWidget {
+  final FileExplorerStrings strings;
+
+  const NewFolderDialog({super.key, required this.strings});
+
+  static Future<String?> show(BuildContext context, FileExplorerStrings strings) {
     return showDialog<String>(
       context: context,
-      builder: (_) => const NewFolderDialog(),
+      builder: (_) => NewFolderDialog(strings: strings),
     );
   }
 
@@ -15,12 +19,13 @@ class NewFolderDialog extends StatefulWidget {
 }
 
 class _NewFolderDialogState extends State<NewFolderDialog> {
-  final _ctrl = TextEditingController(text: 'New folder');
+  late final TextEditingController _ctrl;
   final _focus = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _ctrl = TextEditingController(text: widget.strings.newFolderDefaultName);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focus.requestFocus();
       _ctrl.selection = TextSelection(
@@ -46,17 +51,18 @@ class _NewFolderDialogState extends State<NewFolderDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = widget.strings;
     return AlertDialog(
-      title: const Text('New Folder'),
+      title: Text(s.newFolderTitle),
       content: SizedBox(
         width: 320,
         child: TextField(
           controller: _ctrl,
           focusNode: _focus,
-          decoration: const InputDecoration(
-            labelText: 'Folder name',
+          decoration: InputDecoration(
+            labelText: s.newFolderFieldLabel,
             isDense: true,
-            border: OutlineInputBorder(
+            border: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
           ),
@@ -66,11 +72,11 @@ class _NewFolderDialogState extends State<NewFolderDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(s.cancelButton),
         ),
         FilledButton(
           onPressed: _submit,
-          child: const Text('Create'),
+          child: Text(s.createButton),
         ),
       ],
     );

@@ -17,24 +17,30 @@ inside your Flutter app's widget tree.
 ## Features
 
 - Four modes: `save`, `open`, `openMulti`, `openDirectory`
-- Clickable breadcrumb path bar (click any ancestor to jump there)
-- Click the bar to switch to a typed path mode
-- Quick Access sidebar (Desktop, Documents, Downloads, Pictures)
-- "This PC" with mounted drives (Windows enumerates A:\ … Z:\)
-- Sortable Details view: Name, Date modified, Type, Size
-- Type-to-search (typing characters jumps to the next matching entry)
-- Multi-select for `openMulti`
-- New Folder
-- Filter dropdown driven by `FileTypeFilter` groups
-- Auto-appends extension in save mode
-- Replace-file confirmation
-- Pure Dart — no platform channels, no plugin code
+- **Three view modes**: Details, Large icons, and Tiles
+- **Recursive search** of the current folder, with match locations
+- **Preview pane** for images, text files, and metadata
+- **Drag-and-drop** files/folders from the OS into the dialog
+- **Recent locations** persisted between sessions
+- **Hidden-files toggle** (Windows Hidden/System attributes detected, not just dotfiles)
+- Clickable breadcrumb path bar; click to type a path with
+  **`%VAR%` / `$VAR` / `~` expansion** and **directory autocomplete**
+- Quick Access sidebar (system-pulled on Windows) + "This PC" with mounted
+  drives (Windows `A:\ … Z:\`; macOS `/Volumes`; Linux `/media`, `/mnt`)
+- Sortable Details columns: Name, Date modified, Type, Size
+- Status bar with item and selection counts/sizes
+- `Esc` to cancel, `Backspace` to go up a level, type-to-jump in the list
+- Multi-select for `openMulti`, New Folder, replace-file confirmation
+- Filter dropdown driven by `FileTypeFilter`; auto-appends extension on save
+- **Custom per-entry icons** via `iconBuilder`
+- **Fully localizable** via `FileExplorerStrings`
+- No native picker — renders entirely inside your Flutter widget tree
 
 ## Install
 
 ```yaml
 dependencies:
-  flutter_file_explorer: ^0.1.0
+  flutter_file_explorer: ^0.2.0
 ```
 
 ## Usage
@@ -85,15 +91,54 @@ Common parameters:
 - `initialDirectory` — starts here; falls back to user's Downloads, then home
 - `fileTypes: List<FileTypeFilter>` — filter dropdown groups
 - `quickLocations: List<QuickLocation>` — overrides the default sidebar entries
+- `dismissable` — allow click-outside to cancel (default `false`)
+- `showHiddenFiles` — initial state of the hidden-files toggle (default `false`)
+- `initialViewMode` — `FileExplorerViewMode.details` (default), `largeIcons`, or `tiles`
+- `iconBuilder` — custom per-entry icons (see below)
+- `strings` — localized labels (see below)
+
+## Custom icons
+
+Supply an `iconBuilder` to override icons per entry. Return `null` to keep the
+default icon for that entry.
+
+```dart
+await FileExplorer.open(
+  context,
+  iconBuilder: (context, entry) {
+    if (entry.isDirectory) {
+      return const Icon(Icons.folder_special, color: Colors.amber);
+    }
+    if (entry.extension == 'dart') return const Icon(Icons.flutter_dash);
+    return null; // default icon
+  },
+);
+```
+
+## Localization
+
+Every user-facing label has an English default and can be overridden by passing
+a `FileExplorerStrings`:
+
+```dart
+await FileExplorer.open(
+  context,
+  strings: const FileExplorerStrings(
+    openButton: 'Öffnen',
+    cancelButton: 'Abbrechen',
+    searchHint: 'Ordner durchsuchen',
+    quickAccess: 'Schnellzugriff',
+    thisPc: 'Dieser PC',
+  ),
+);
+```
 
 ## Roadmap
 
-- View modes (Large icons, Tiles) in addition to Details
-- Hidden-files toggle
-- Drag-drop into the picker
-- Recent / pinned locations with persistence
-- Pluggable icon callback for file-type icons
-- Localization
+- Thumbnail previews for images in grid views
+- Column resizing in Details view
+- Per-folder remembered view mode and sort
+- Cut/copy/paste and rename context actions
 
 ## Example
 

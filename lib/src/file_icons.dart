@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import 'strings.dart';
+
 /// Maps filenames to Material icons based on their extension.
 class FileIcons {
   FileIcons._();
@@ -115,9 +117,13 @@ class FileIcons {
     }
   }
 
-  static String typeLabel(String fileName, {bool isDirectory = false}) {
-    if (isDirectory) return 'File folder';
+  static String typeLabel(
+    String fileName,
+    FileExplorerStrings strings, {
+    bool isDirectory = false,
+  }) {
+    if (isDirectory) return strings.fileFolderType;
     final ext = p.extension(fileName).toUpperCase().replaceFirst('.', '');
-    return ext.isEmpty ? 'File' : '$ext File';
+    return ext.isEmpty ? strings.genericFileType : strings.extensionFileType(ext);
   }
 }

@@ -3,8 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import '../path_utils.dart';
+
 /// Breadcrumb-style path bar. Click a segment to jump to that ancestor.
-/// Click empty space (or the folder icon) to switch to a typed TextField mode.
+/// Click empty space (or the folder icon) to switch to a typed TextField mode
+/// with environment-variable expansion (`%VAR%`, `$VAR`, `~`) and live
+/// directory autocomplete.
 class PathBar extends StatefulWidget {
   final String path;
   final ValueChanged<String> onPathSelected;
@@ -29,6 +33,7 @@ class _PathBarState extends State<PathBar> {
   void initState() {
     super.initState();
     _ctrl = TextEditingController(text: widget.path);
+    _focus.addListener(_onFocusChange);
   }
 
   @override
@@ -46,10 +51,21 @@ class _PathBarState extends State<PathBar> {
 
   @override
   void dispose() {
+    _focus.removeListener(_onFocusChange);
     _ctrl.dispose();
     _focus.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// When the typed field loses focus (e.g. the user clicks into the file list),
+  /// revert to breadcrumb mode. Selecting a suggestion keeps focus, so this does
+  /// not interfere with autocomplete.
+  void _onFocusChange() {
+    if (!_focus.hasFocus && _editing) {
+      setState(() => _editing = false);
+      _ctrl.text = widget.path;
+    }
   }
 
   void _enterEdit() {
@@ -66,18 +82,54 @@ class _PathBarState extends State<PathBar> {
     });
   }
 
-  void _submit(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty || trimmed == widget.path) {
+  void _commit(String value) {
+    final expanded = expandPath(value);
+    if (expanded.isEmpty || samePath(expanded, widget.path)) {
       setState(() => _editing = false);
       return;
     }
-    if (Directory(trimmed).existsSync()) {
-      widget.onPathSelected(trimmed);
-      setState(() => _editing = false);
+    if (Directory(expanded).existsSync()) {
+      _editing = false;
+      widget.onPathSelected(expanded);
     } else {
       _ctrl.text = widget.path;
       setState(() => _editing = false);
+    }
+  }
+
+  Future<Iterable<String>> _suggestions(String raw) async {
+    final text = raw.trim();
+    if (text.isEmpty) return const <String>[];
+    final expanded = expandPath(text);
+
+    String dirPart;
+    String prefix;
+    if (expanded.endsWith('/') || expanded.endsWith(r'\')) {
+      dirPart = expanded;
+      prefix = '';
+    } else {
+      dirPart = p.dirname(expanded);
+      prefix = p.basename(expanded);
+    }
+
+    try {
+      final dir = Directory(dirPart);
+      if (!await dir.exists()) return const <String>[];
+      final out = <String>[];
+      final lowerPrefix = prefix.toLowerCase();
+      await for (final e in dir.list(followLinks: false)) {
+        if (e is! Directory) continue;
+        final name = p.basename(e.path);
+        if (lowerPrefix.isEmpty ||
+            name.toLowerCase().startsWith(lowerPrefix)) {
+          out.add(e.path);
+          if (out.length >= 30) break;
+        }
+      }
+      out.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      return out;
+    } catch (_) {
+      return const <String>[];
     }
   }
 
@@ -140,22 +192,76 @@ class _PathBarState extends State<PathBar> {
     if (_editing) {
       return SizedBox(
         height: 40,
-        child: TextField(
-          controller: _ctrl,
+        child: RawAutocomplete<String>(
+          textEditingController: _ctrl,
           focusNode: _focus,
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            prefixIcon: Icon(Icons.folder_outlined, size: 20),
-          ),
-          onSubmitted: _submit,
-          onTapOutside: (_) {
-            if (_editing) setState(() => _editing = false);
-            _ctrl.text = widget.path;
+          optionsBuilder: (value) => _suggestions(value.text),
+          displayStringForOption: (option) => option,
+          onSelected: _commit,
+          fieldViewBuilder: (context, controller, focusNode, onSubmit) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                prefixIcon: Icon(Icons.folder_outlined, size: 20),
+              ),
+              onSubmitted: _commit,
+              // No-op so tapping a suggestion (an "outside" tap) does not blur
+              // the field before onSelected fires.
+              onTapOutside: (_) {},
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            final opts = options.toList();
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                clipBehavior: Clip.antiAlias,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260, maxWidth: 520),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: opts.length,
+                    itemBuilder: (context, i) {
+                      final option = opts[i];
+                      return InkWell(
+                        onTap: () => onSelected(option),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.folder_outlined,
+                                  size: 16, color: cs.onSurfaceVariant),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: const TextStyle(fontSize: 13),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
           },
         ),
       );

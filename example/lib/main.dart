@@ -82,6 +82,39 @@ class _HomePageState extends State<HomePage> {
     setState(() => _lastResult = dir == null ? 'Cancelled' : 'Dir → $dir');
   }
 
+  /// Shows the v0.2.0 extras: tiles view by default, hidden files visible,
+  /// a custom icon builder, and a localized (German) string set.
+  Future<void> _tryCustomized() async {
+    final path = await FileExplorer.open(
+      context,
+      title: 'Datei öffnen',
+      initialViewMode: FileExplorerViewMode.tiles,
+      showHiddenFiles: true,
+      iconBuilder: (context, entry) {
+        if (entry.isDirectory) {
+          return const Icon(Icons.folder_special, color: Colors.amber);
+        }
+        if (entry.extension == 'dart') {
+          return const Icon(Icons.flutter_dash, color: Colors.blue);
+        }
+        return null; // fall back to the default icon
+      },
+      strings: const FileExplorerStrings(
+        openButton: 'Öffnen',
+        cancelButton: 'Abbrechen',
+        searchHint: 'Ordner durchsuchen',
+        quickAccess: 'Schnellzugriff',
+        thisPc: 'Dieser PC',
+        recent: 'Zuletzt verwendet',
+        nameColumn: 'Name',
+        dateModifiedColumn: 'Änderungsdatum',
+        typeColumn: 'Typ',
+        sizeColumn: 'Größe',
+      ),
+    );
+    setState(() => _lastResult = path == null ? 'Cancelled' : 'Custom → $path');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,9 +148,22 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(Icons.folder_open_outlined),
                   label: const Text('Pick Folder…'),
                 ),
+                FilledButton.tonalIcon(
+                  onPressed: _tryCustomized,
+                  icon: const Icon(Icons.tune),
+                  label: const Text('Customized (tiles + i18n + icons)…'),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            Text(
+              'Inside any dialog, try: the search box, the view-mode menu, the '
+              'hidden-files and preview toggles, drag-and-drop from Explorer, '
+              'and typing a path like %USERPROFILE% in the address bar. '
+              'Folders you pick from are remembered under "Recent".',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

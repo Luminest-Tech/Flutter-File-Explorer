@@ -5,4 +5,11 @@
 library;
 
 export 'src/api.dart' show FileExplorer;
-export 'src/models.dart' show FileTypeFilter, QuickLocation;
+export 'src/models.dart'
+    show
+        FileTypeFilter,
+        QuickLocation,
+        FileExplorerEntry,
+        FileIconBuilder,
+        FileExplorerViewMode;
+export 'src/strings.dart' show FileExplorerStrings;
