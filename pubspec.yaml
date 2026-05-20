@@ -9,6 +9,12 @@ topics:
   - desktop
   - picker
 
+screenshots:
+  - description: "Open dialog in a dark theme, tiles view with image previews."
+    path: pics/screenshot-dark.png
+  - description: "The same dialog in a light theme."
+    path: pics/screenshot-light.png
+
 environment:
   sdk: ^3.8.1
   flutter: ">=3.22.0"

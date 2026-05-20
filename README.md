@@ -1,40 +1,25 @@
 # flutter_file_explorer
 
-An **embedded** Windows-Explorer-style file picker for Flutter desktop apps.
-Renders entirely as a Flutter widget — no native OS dialogs, no HWND parenting,
-no surprise foreground windows when called from sub-windows.
+A file picker for Flutter desktop that renders inside your app instead of
+opening the operating system dialog. It looks like Windows Explorer, follows
+your app's theme, and behaves the same on Windows, macOS, and Linux.
 
-Built for Flutter desktop on **Windows**, **macOS**, and **Linux**.
+| Dark | Light |
+|------|-------|
+| ![Open dialog, dark theme](pics/screenshot-dark.png) | ![Open dialog, light theme](pics/screenshot-light.png) |
 
 ## Why
 
-Native file pickers (`file_picker`, `flutter_file_dialog`, etc.) attach the
-dialog to the platform's main window via `hwndOwner` / NSWindow. In apps that
-use `desktop_multi_window`, calling them from a sub-window drags the *main*
-window to the foreground. This package side-steps the issue by living entirely
-inside your Flutter app's widget tree.
+Most pickers hand off to the native OS dialog. That works until you want the
+picker to match your app's look, behave the same on every platform, or show
+things the native dialog won't. This one is an ordinary Flutter widget, so it
+reads your `ThemeData` (colors, light and dark) and you can change how it works.
 
-## Features
-
-- Four modes: `save`, `open`, `openMulti`, `openDirectory`
-- **Three view modes**: Details, Large icons, and Tiles
-- **Recursive search** of the current folder, with match locations
-- **Preview pane** for images, text files, and metadata
-- **Drag-and-drop** files/folders from the OS into the dialog
-- **Recent locations** persisted between sessions
-- **Hidden-files toggle** (Windows Hidden/System attributes detected, not just dotfiles)
-- Clickable breadcrumb path bar; click to type a path with
-  **`%VAR%` / `$VAR` / `~` expansion** and **directory autocomplete**
-- Quick Access sidebar (system-pulled on Windows) + "This PC" with mounted
-  drives (Windows `A:\ … Z:\`; macOS `/Volumes`; Linux `/media`, `/mnt`)
-- Sortable Details columns: Name, Date modified, Type, Size
-- Status bar with item and selection counts/sizes
-- `Esc` to cancel, `Backspace` to go up a level, type-to-jump in the list
-- Multi-select for `openMulti`, New Folder, replace-file confirmation
-- Filter dropdown driven by `FileTypeFilter`; auto-appends extension on save
-- **Custom per-entry icons** via `iconBuilder`
-- **Fully localizable** via `FileExplorerStrings`
-- No native picker — renders entirely inside your Flutter widget tree
+It also avoids a specific problem. Native dialogs attach to the platform's main
+window, so if your app uses `desktop_multi_window` and you open a native picker
+from a secondary window, the main window jumps to the front. This picker lives
+in the widget tree, so that never happens. That edge case is where the package
+started, but it works fine as a general picker for any desktop app.
 
 ## Install
 
@@ -43,64 +28,115 @@ dependencies:
   flutter_file_explorer: ^0.2.0
 ```
 
-## Usage
-
 ```dart
 import 'package:flutter_file_explorer/flutter_file_explorer.dart';
+```
 
-// Save
-final savedPath = await FileExplorer.save(
+## Quick start
+
+There are four entry points, all static methods on `FileExplorer`. Each one
+takes a `BuildContext` and returns a `Future` that resolves to the chosen path,
+or `null` when the user cancels.
+
+```dart
+// Save a file (you provide the starting name)
+final savePath = await FileExplorer.save(
   context,
-  title: 'Save Report',
-  initialFileName: 'report.csv',
+  initialFileName: 'notes.txt',
   fileTypes: const [
-    FileTypeFilter(label: 'CSV File (*.csv)', extensions: ['csv']),
-    FileTypeFilter(label: 'All Files (*.*)', extensions: ['*']),
+    FileTypeFilter(label: 'Text file (*.txt)', extensions: ['txt']),
+    FileTypeFilter(label: 'All files (*.*)', extensions: ['*']),
   ],
 );
 
-// Open single file
+// Open one file
 final openPath = await FileExplorer.open(
   context,
   fileTypes: const [
-    FileTypeFilter(label: 'Image', extensions: ['png', 'jpg', 'jpeg']),
+    FileTypeFilter(label: 'Images', extensions: ['png', 'jpg', 'jpeg']),
   ],
 );
 
-// Open multiple files
+// Open several files
 final paths = await FileExplorer.openMulti(context);
 
 // Pick a folder
 final dir = await FileExplorer.openDirectory(context);
 ```
 
-All methods return `null` if the user cancelled.
+`save` does not write anything by itself. It returns a path so you can write the
+file how you like:
 
-## API
+```dart
+final path = await FileExplorer.save(context, initialFileName: 'export.csv');
+if (path != null) {
+  await File(path).writeAsString(csv);
+}
+```
 
-| Method            | Returns               | Notes                                   |
-|-------------------|-----------------------|-----------------------------------------|
-| `save`            | `Future<String?>`     | Full path including filename            |
-| `open`            | `Future<String?>`     | Single file                             |
-| `openMulti`       | `Future<List<String>?>` | Multiple files                        |
-| `openDirectory`   | `Future<String?>`     | Folder path                             |
+## Methods
 
-Common parameters:
+| Method | Returns | Result |
+|--------|---------|--------|
+| `FileExplorer.save` | `Future<String?>` | Full path including the file name |
+| `FileExplorer.open` | `Future<String?>` | Path to one file |
+| `FileExplorer.openMulti` | `Future<List<String>?>` | Paths to the selected files |
+| `FileExplorer.openDirectory` | `Future<String?>` | Path to a folder |
 
-- `title` — dialog header text
-- `initialDirectory` — starts here; falls back to user's Downloads, then home
-- `fileTypes: List<FileTypeFilter>` — filter dropdown groups
-- `quickLocations: List<QuickLocation>` — overrides the default sidebar entries
-- `dismissable` — allow click-outside to cancel (default `false`)
-- `showHiddenFiles` — initial state of the hidden-files toggle (default `false`)
-- `initialViewMode` — `FileExplorerViewMode.details` (default), `largeIcons`, or `tiles`
-- `iconBuilder` — custom per-entry icons (see below)
-- `strings` — localized labels (see below)
+A `null` result means the user cancelled.
+
+## Parameters
+
+Every method takes `context` first. `save` also requires `initialFileName`.
+`openDirectory` does not take `fileTypes` or `initialFileName`. Everything else
+is optional.
+
+| Parameter | Type | Default | What it does |
+|-----------|------|---------|--------------|
+| `title` | `String` | set per method | Header text. |
+| `initialFileName` | `String` | required on `save` | Name pre-filled in the save field. |
+| `initialDirectory` | `String?` | `null` | Folder to open first. Falls back to Downloads, then the home folder. |
+| `fileTypes` | `List<FileTypeFilter>?` | `null` | Groups for the type filter. On `save`, the first group's extension is added if you leave it off. |
+| `quickLocations` | `List<QuickLocation>?` | `null` | Replaces the default Quick Access entries in the sidebar. |
+| `dismissable` | `bool` | `false` | Let a click outside the dialog cancel it. |
+| `showHiddenFiles` | `bool` | `false` | Start with hidden files shown. There is a toolbar toggle either way. |
+| `initialViewMode` | `FileExplorerViewMode` | `details` | Starting layout: `details`, `largeIcons`, or `tiles`. |
+| `iconBuilder` | `FileIconBuilder?` | `null` | Draw your own row icons. See below. |
+| `strings` | `FileExplorerStrings` | English | Override any label. See below. |
+
+### FileTypeFilter
+
+A labelled group of extensions for the filter dropdown. Use `['*']` to match
+everything.
+
+```dart
+const FileTypeFilter(label: 'Images', extensions: ['png', 'jpg', 'jpeg'])
+const FileTypeFilter(label: 'All files (*.*)', extensions: ['*'])
+```
+
+### QuickLocation
+
+A sidebar shortcut to a folder.
+
+```dart
+const QuickLocation(
+  label: 'Project',
+  path: r'C:\work\project',
+  icon: Icons.work_outline,
+)
+```
+
+## Theming
+
+The dialog uses your app's `Theme`, so it picks up whatever `ColorScheme` you
+set on `MaterialApp`, light or dark. The two screenshots above are the same
+dialog under two themes. You do not pass colors to the picker. Set them on your
+app and the picker follows.
 
 ## Custom icons
 
-Supply an `iconBuilder` to override icons per entry. Return `null` to keep the
-default icon for that entry.
+Pass an `iconBuilder` to draw your own icon for any row. Return `null` to keep
+the built-in icon for that entry.
 
 ```dart
 await FileExplorer.open(
@@ -109,16 +145,21 @@ await FileExplorer.open(
     if (entry.isDirectory) {
       return const Icon(Icons.folder_special, color: Colors.amber);
     }
-    if (entry.extension == 'dart') return const Icon(Icons.flutter_dash);
-    return null; // default icon
+    if (entry.extension == 'dart') {
+      return const Icon(Icons.flutter_dash);
+    }
+    return null;
   },
 );
 ```
 
+`entry` is a `FileExplorerEntry` with `path`, `name`, `isDirectory`, and
+`extension`.
+
 ## Localization
 
-Every user-facing label has an English default and can be overridden by passing
-a `FileExplorerStrings`:
+Labels default to English. Override the ones you need with
+`FileExplorerStrings`:
 
 ```dart
 await FileExplorer.open(
@@ -133,18 +174,37 @@ await FileExplorer.open(
 );
 ```
 
-## Roadmap
+## What the dialog can do
 
-- Thumbnail previews for images in grid views
-- Column resizing in Details view
-- Per-folder remembered view mode and sort
-- Cut/copy/paste and rename context actions
+- Details, large icons, and tiles layouts, with thumbnails for images in the
+  icon and tile views
+- A preview pane for images, text files, and basic metadata
+- Search the current folder and its subfolders, with each result showing where
+  it lives
+- Sort the details view by name, date, type, or size
+- A breadcrumb path bar, plus a typed mode that expands `%USERPROFILE%`,
+  `$HOME`, and `~`, and autocompletes folder names
+- Drag files in from the system file manager
+- Recent folders, remembered between runs
+- A hidden files toggle. On Windows it reads the real Hidden and System
+  attributes, not only names that start with a dot
+- Multi-select, new folder, and a prompt before overwriting on save
+- Keyboard support: Esc cancels, Backspace goes up a level, and typing jumps to
+  a matching file
+
+## Platform notes
+
+- Quick Access comes from the system on Windows and falls back to Desktop,
+  Documents, Downloads, and Pictures on other platforms.
+- Drives and volumes: Windows scans `A:` through `Z:`, macOS lists `/Volumes`,
+  and Linux lists mounts under `/media/$USER`, `/run/media/$USER`, and `/mnt`.
 
 ## Example
 
-A runnable demo lives in `example/`. From the repo root:
+A full demo lives in `example/`, with a theme switcher and a button for each
+mode.
 
 ```bash
 cd example
-flutter run -d windows   # or macos / linux
+flutter run -d windows   # or macos, or linux
 ```
