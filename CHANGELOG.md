@@ -1,6 +1,9 @@
 ## 0.2.2
 
-- Link the GitHub repository and issue tracker in the pubspec.
+- Add the documentation homepage and link the GitHub repository and issue
+  tracker in the pubspec.
+- Point the README screenshots at absolute GitHub URLs so they render on
+  pub.dev.
 
 ## 0.2.1
 
