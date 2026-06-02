@@ -1,8 +1,17 @@
 # Flutter File Explorer
 
+[![pub](https://img.shields.io/pub/v/flutter_file_explorer?logo=dart&label=pub&color=0175C2)](https://pub.dev/packages/flutter_file_explorer)
+[![points](https://img.shields.io/pub/points/flutter_file_explorer?color=0175C2)](https://pub.dev/packages/flutter_file_explorer/score)
+[![likes](https://img.shields.io/pub/likes/flutter_file_explorer?color=0175C2)](https://pub.dev/packages/flutter_file_explorer/score)
+[![stars](https://img.shields.io/github/stars/Luminest-Tech/Flutter-File-Explorer?logo=github&label=stars&color=24292e)](https://github.com/Luminest-Tech/Flutter-File-Explorer/stargazers)
+[![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-3b82f6)](https://pub.dev/packages/flutter_file_explorer)
+[![license](https://img.shields.io/badge/license-MIT-7c4dff)](https://github.com/Luminest-Tech/Flutter-File-Explorer/blob/master/LICENSE)
+
 A file picker for Flutter desktop that renders inside your app instead of
 opening the operating system dialog. It looks like Windows Explorer, follows
 your app's theme, and behaves the same on Windows, macOS, and Linux.
+
+**pub.dev:** https://pub.dev/packages/flutter_file_explorer
 
 | Dark | Light |
 |------|-------|
@@ -11,21 +20,21 @@ your app's theme, and behaves the same on Windows, macOS, and Linux.
 ## Why
 
 Most pickers hand off to the native OS dialog. That works until you want the
-picker to match your app's look, behave the same on every platform, or show
-things the native dialog won't. This one is an ordinary Flutter widget, so it
-reads your `ThemeData` (colors, light and dark) and you can change how it works.
+picker to match your app's look, run the same across platforms, or show things
+the native dialog won't. This one is an ordinary Flutter widget, so it reads your
+`ThemeData` (colors, light and dark) and you control how it behaves.
 
-It also avoids a specific problem. Native dialogs attach to the platform's main
+You also dodge a multi-window bug. Native dialogs attach to the platform's main
 window, so if your app uses `desktop_multi_window` and you open a native picker
-from a secondary window, the main window jumps to the front. This picker lives
-in the widget tree, so that never happens. That edge case is where the package
-started, but it works fine as a general picker for any desktop app.
+from a secondary window, the main window jumps to the front. This picker lives in
+the widget tree, so that never happens. That edge case is where the package
+started, though it works as a general picker too.
 
 ## Install
 
 ```yaml
 dependencies:
-  flutter_file_explorer: ^0.2.0
+  flutter_file_explorer: ^0.2.2
 ```
 
 ```dart
