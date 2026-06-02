@@ -5,7 +5,7 @@
 [![likes](https://img.shields.io/pub/likes/flutter_file_explorer?color=0175C2)](https://pub.dev/packages/flutter_file_explorer/score)
 [![stars](https://img.shields.io/github/stars/Luminest-Tech/Flutter-File-Explorer?logo=github&label=stars&color=24292e)](https://github.com/Luminest-Tech/Flutter-File-Explorer/stargazers)
 [![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-3b82f6)](https://pub.dev/packages/flutter_file_explorer)
-[![license](https://img.shields.io/badge/license-MIT-7c4dff)](https://github.com/Luminest-Tech/Flutter-File-Explorer/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-7c4dff)](https://github.com/Luminest-Tech/Flutter-File-Explorer/blob/main/LICENSE)
 
 A file picker for Flutter desktop that renders inside your app instead of
 opening the operating system dialog. It looks like Windows Explorer, follows
@@ -15,7 +15,7 @@ your app's theme, and behaves the same on Windows, macOS, and Linux.
 
 | Dark | Light |
 |------|-------|
-| ![Open dialog, dark theme](https://raw.githubusercontent.com/Luminest-Tech/Flutter-File-Explorer/master/pics/screenshot-dark.png) | ![Open dialog, light theme](https://raw.githubusercontent.com/Luminest-Tech/Flutter-File-Explorer/master/pics/screenshot-light.png) |
+| ![Open dialog, dark theme](https://raw.githubusercontent.com/Luminest-Tech/Flutter-File-Explorer/main/pics/screenshot-dark.png) | ![Open dialog, light theme](https://raw.githubusercontent.com/Luminest-Tech/Flutter-File-Explorer/main/pics/screenshot-light.png) |
 
 ## Why
 
