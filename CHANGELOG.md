@@ -1,3 +1,11 @@
+## 0.2.3
+
+Documentation only.
+
+- Add status badges (pub version, points, likes, GitHub stars, platform,
+  license) to the README.
+- Point the README screenshots and links at the `main` branch.
+
 ## 0.2.2
 
 - Add the documentation homepage and link the GitHub repository and issue
